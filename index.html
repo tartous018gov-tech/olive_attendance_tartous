@@ -6,11 +6,11 @@
     <meta name="theme-color" content="#556B2F">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="معاصر الزيتون">
+    <meta name="apple-mobile-web-app-title" content="مشرفي المعاصر">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="icon.svg">
     <link rel="apple-touch-icon" href="icon-512.png">
-    <title>رابط دوام عمال معاصر الزيتون</title>
+    <title>رابط مشرفي معاصر الزيتون في طرطوس</title>
     <style>
         :root {
             --primary: #556B2F;
@@ -37,8 +37,8 @@
             box-shadow: 0 4px 15px rgba(85,107,47,0.15);
             width: 100%; flex: 1;
         }
-        .title { text-align: center; color: var(--primary); font-size: 1.25rem; font-weight: 700; margin: 0 0 2px 0; }
-        .subtitle { text-align: center; color: #64748b; font-size: 0.9rem; font-weight: 600; margin: 0 0 12px 0; }
+        .title { text-align: center; color: var(--primary); font-size: 1.15rem; font-weight: 700; margin: 0 0 2px 0; line-height: 1.4; }
+        .subtitle { text-align: center; color: #64748b; font-size: 0.88rem; font-weight: 600; margin: 0 0 12px 0; }
 
         .status-banner { width: 100%; padding: 8px 10px; border-radius: 8px; font-size: 13px; font-weight: bold; text-align: center; margin-bottom: 10px; }
         .banner-online { background: #e6f0d3; color: #3D5229; border: 1px solid var(--primary); }
@@ -121,8 +121,8 @@
 </head>
 <body>
     <div class="container">
-        <h1 class="title">🫒 معاصر الزيتون</h1>
-        <p class="subtitle">رابط دوام عمال معاصر الزيتون</p>
+        <h1 class="title">🫒 رابط مشرفي معاصر الزيتون في طرطوس</h1>
+        <p class="subtitle">تسجيل حضور العاملين</p>
 
         <div id="connectionBanner" class="status-banner banner-online">🟢 متصل (أونلاين)</div>
 
@@ -150,7 +150,7 @@
 
             <div class="form-group">
                 <label for="phone">رقم الهاتف:</label>
-                <input type="tel" id="phone" placeholder="093xxxxxxx" inputmode="numeric" pattern="[0-9]*" maxlength="10" autocomplete="off">
+                <input type="tel" id="phone" placeholder="09xxxxxxxx" inputmode="numeric" pattern="[0-9]*" maxlength="10" autocomplete="off">
                 <div id="phoneMsg"></div>
             </div>
 
@@ -190,7 +190,7 @@
     </footer>
 
     <script>
-    var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxO4IY1UvPB5qEaE9f1sYqKvyXCQTNpJEnHiLSGw9InG4Cqs1essSuP8xJ6TXOeK2Aw/exec";
+    var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxo2wcCYEuuS_CAdNdL3spJXY2g5xEbLQEUQNOVBl-gjS6lQMz1GfAO3OYIjBtor8ZT/exec";
     var QUEUE_KEY = 'olive_offline_queue';
     var SENT_COUNT_KEY = 'olive_sent_count';
     var CHUNK_SIZE = 5;
@@ -288,12 +288,13 @@
         } catch (e) { console.error('GPS:', e); }
     }
 
+    // ✅ التحقق: يبدأ بـ 09 فقط + 10 أرقام
     function validatePhoneLive() {
         var val = phoneInput.value.replace(/\D/g, '').slice(0, 10);
         phoneInput.value = val;
         if (val.length === 0) { phoneMsg.textContent = ''; phoneMsg.className = ''; return false; }
         if (val.length < 10) { phoneMsg.textContent = '⏳ يجب إدخال 10 أرقام (' + val.length + '/10)'; phoneMsg.className = 'error-text'; return false; }
-        if (!val.startsWith('093')) { phoneMsg.textContent = '❌ يجب أن يبدأ الرقم بـ 093'; phoneMsg.className = 'error-text'; return false; }
+        if (!val.startsWith('09')) { phoneMsg.textContent = '❌ يجب أن يبدأ الرقم بـ 09'; phoneMsg.className = 'error-text'; return false; }
         phoneMsg.textContent = '✓ رقم صحيح';
         phoneMsg.className = 'success-text';
         return true;
@@ -404,7 +405,7 @@
         try {
             var pressOK = pressInput && pressInput.value.trim().length >= 2;
             var workerOK = workerInput && workerInput.value.trim().length >= 3;
-            var phoneOK = phoneInput && /^093\d{7}$/.test(phoneInput.value);
+            var phoneOK = phoneInput && /^09\d{8}$/.test(phoneInput.value);
             var photoOK = photoBase64 !== null;
             
             if (pressOK && workerOK && phoneOK && isGpsValid && photoOK && !isSending) {
@@ -479,13 +480,13 @@
         var afterResult = function (result) {
             if (result === 'success') {
                 incrementSentCount(1);
-                showStatus("✅ تم تسجيل الحضور بنجاح", "success");
+                showStatus("✅ تم الإرسال بنجاح", "success");
                 hideStatus(5000);
             } else {
                 if (origin === "متصل") payload.origin = "غير متصل (فشل الاتصال)";
                 else payload.origin = "غير متصل";
                 saveToQueue(payload);
-                showStatus("⚠️ تعذر إرسال البصمة — تم حفظها وسيتم إرسالها عند توفر الإنترنت", "warning");
+                showStatus("⚠️ تعذر الإرسال — تم حفظه وسيتم إرساله عند توفر الإنترنت", "warning");
                 hideStatus(6000);
                 if (navigator.onLine) processQueue();
             }
@@ -523,7 +524,7 @@
                 processQueue._running = false;
                 updateUI();
                 if (totalSent > 0) {
-                    showStatus("✅ تم إرسال " + totalSent + " بصمة معلقة", "success");
+                    showStatus("✅ تم إرسال " + totalSent + " إرسالية معلقة", "success");
                     hideStatus(6000);
                 }
                 return Promise.resolve(true);
@@ -594,9 +595,9 @@
             var pendingOnLoad = getQueue().length;
             if (pendingOnLoad > 0) {
                 if (navigator.onLine) {
-                    showStatus("⏳ لديك " + pendingOnLoad + " بصمة معلقة، جاري محاولة الإرسال...", "warning");
+                    showStatus("⏳ لديك " + pendingOnLoad + " إرسالية معلقة، جاري محاولة الإرسال...", "warning");
                 } else {
-                    showStatus("📴 لديك " + pendingOnLoad + " بصمة معلقة — سيتم إرسالها عند توفر الإنترنت", "warning");
+                    showStatus("📴 لديك " + pendingOnLoad + " إرسالية معلقة — سيتم إرسالها عند توفر الإنترنت", "warning");
                 }
             }
             
