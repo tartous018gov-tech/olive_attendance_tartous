@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#556B2F">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="معاصر الزيتون">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <link rel="apple-touch-icon" href="icon-512.png">
+    <title>رابط دوام عمال معاصر الزيتون</title>
+    <style>
+        :root {
+            --primary: #556B2F;
+            --primary-light: #7A8F3F;
+            --accent: #808000;
+            --bg: #F5F3E7;
+            --card-bg: #FFFFFF;
+            --text: #2C3E1F;
+            --success: #6B8E23;
+            --danger: #B33A3A;
+            --warning: #D4891A;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg); color: var(--text);
+            margin: 0; padding: 12px;
+            display: flex; flex-direction: column; min-height: 100vh;
+        }
+        .container {
+            max-width: 460px; margin: auto;
+            background: var(--card-bg); padding: 18px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(85,107,47,0.15);
+            width: 100%; flex: 1;
+        }
+        .title { text-align: center; color: var(--primary); font-size: 1.25rem; font-weight: 700; margin: 0 0 2px 0; }
+        .subtitle { text-align: center; color: #64748b; font-size: 0.9rem; font-weight: 600; margin: 0 0 12px 0; }
+
+        .status-banner { width: 100%; padding: 8px 10px; border-radius: 8px; font-size: 13px; font-weight: bold; text-align: center; margin-bottom: 10px; }
+        .banner-online { background: #e6f0d3; color: #3D5229; border: 1px solid var(--primary); }
+        .banner-offline { background: #fee2e2; color: #991b1b; border: 1px solid #dc2626; }
+
+        .stats-container { display: flex; justify-content: space-between; margin-bottom: 12px; gap: 8px; }
+        .stat-box { flex: 1; padding: 6px 8px; border-radius: 8px; text-align: center; background: #f8fafc; border: 1px solid #e2e8f0; }
+        .stat-number { font-size: 16px; font-weight: bold; display: block; margin-top: 2px; }
+        .stat-sent { color: var(--primary); }
+        .stat-pending { color: var(--warning); }
+
+        .form-group { margin-bottom: 10px; }
+        label { display: block; margin-bottom: 4px; font-weight: 600; font-size: 0.85rem; color: #475569; }
+        input {
+            width: 100%; padding: 10px 12px;
+            border: 1px solid #ccc; border-radius: 8px;
+            font-size: 0.95rem;
+        }
+        input:focus { border-color: var(--primary); outline: none; }
+        #msg, #phoneMsg { margin-top: 3px; font-size: 0.8rem; min-height: 16px; }
+        .error-text { color: var(--danger); }
+        .success-text { color: var(--success); }
+
+        .gps-box { padding: 8px; background: #f0f4e8; border: 1px solid #c8d4b0; border-radius: 8px; font-size: 12px; text-align: center; font-weight: bold; line-height: 1.5; color: #3D5229; }
+        .retry-gps { background: #6c757d; color: white; border: none; border-radius: 4px; padding: 3px 8px; font-size: 0.75rem; cursor: pointer; margin-top: 4px; }
+
+        .camera-box {
+            background: #f0f4e8; border: 2px dashed var(--primary);
+            border-radius: 12px; padding: 12px; text-align: center;
+            margin-bottom: 10px;
+        }
+        #cameraVideo {
+            width: 100%; max-height: 300px;
+            border-radius: 8px; background: #000;
+            display: none;
+        }
+        #photoPreview {
+            width: 100%; max-height: 300px;
+            border-radius: 8px; border: 2px solid var(--primary);
+            display: none;
+            object-fit: cover;
+        }
+        #cameraPlaceholder { padding: 20px 10px; color: #64748b; font-size: 14px; }
+        #cameraPlaceholder .icon { font-size: 40px; display: block; margin-bottom: 8px; }
+        .camera-actions {
+            display: flex; gap: 6px; margin-top: 10px;
+            flex-wrap: wrap; justify-content: center;
+        }
+        .camera-btn {
+            padding: 10px 16px; border: none; border-radius: 8px;
+            font-weight: bold; font-size: 14px; cursor: pointer;
+            flex: 1; min-width: 130px;
+        }
+        .btn-open-camera { background: var(--primary); color: white; }
+        .btn-capture { background: var(--success); color: white; }
+        .btn-retake { background: var(--warning); color: white; }
+        .btn-cancel { background: #6c757d; color: white; }
+        .photo-status { font-size: 12px; color: var(--success); margin-top: 6px; font-weight: bold; }
+
+        button[type="submit"] {
+            width: 100%; padding: 13px;
+            background: var(--primary); color: white; border: none;
+            border-radius: 8px; font-size: 1rem; font-weight: bold;
+            cursor: pointer; margin-top: 8px;
+        }
+        button[type="submit"]:disabled { background: #ccc; cursor: not-allowed; opacity: 0.7; }
+
+        #statusBox { margin-top: 10px; padding: 10px; border-radius: 6px; text-align: center; font-size: 13px; font-weight: bold; display: none; }
+        .status-success { background: #e6f0d3; color: #3D5229; border: 1px solid #a7d078; }
+        .status-error { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+        .status-warning { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+
+        footer {
+            text-align: center; margin-top: 15px;
+            font-size: 0.72rem; color: #94a3b8;
+            border-top: 1px solid #e2e8f0; padding-top: 8px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">🫒 معاصر الزيتون</h1>
+        <p class="subtitle">رابط دوام عمال معاصر الزيتون</p>
+
+        <div id="connectionBanner" class="status-banner banner-online">🟢 متصل (أونلاين)</div>
+
+        <div class="stats-container">
+            <div class="stat-box">
+                <span style="font-size: 10px; color: #64748b; font-weight: bold;">المرسلة</span>
+                <span id="sentCount" class="stat-number stat-sent">0</span>
+            </div>
+            <div class="stat-box">
+                <span style="font-size: 10px; color: #64748b; font-weight: bold;">المعلقة</span>
+                <span id="pendingCount" class="stat-number stat-pending">0</span>
+            </div>
+        </div>
+
+        <form id="attendanceForm" autocomplete="off">
+            <div class="form-group">
+                <label for="pressName">اسم معصرة الزيتون:</label>
+                <input type="text" id="pressName" placeholder="مثال: معصرة النور" autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label for="workerName">اسم العامل:</label>
+                <input type="text" id="workerName" placeholder="الاسم الكامل" autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label for="phone">رقم الهاتف:</label>
+                <input type="tel" id="phone" placeholder="093xxxxxxx" inputmode="numeric" pattern="[0-9]*" maxlength="10" autocomplete="off">
+                <div id="phoneMsg"></div>
+            </div>
+
+            <div class="form-group">
+                <label>موقع GPS:</label>
+                <div id="gpsDisplay" class="gps-box">⏳ جاري تحديد الموقع...</div>
+            </div>
+
+            <div class="form-group">
+                <label>صورة العامل (من الكاميرا فقط):</label>
+                <div class="camera-box">
+                    <video id="cameraVideo" autoplay playsinline muted></video>
+                    <img id="photoPreview" alt="معاينة">
+                    <div id="cameraPlaceholder">
+                        <span class="icon">📷</span>
+                        اضغط "فتح الكاميرا" لالتقاط الصورة
+                    </div>
+                    <div class="camera-actions">
+                        <button type="button" id="btnOpenCamera" class="camera-btn btn-open-camera" onclick="openCamera()">📷 فتح الكاميرا</button>
+                        <button type="button" id="btnCapture" class="camera-btn btn-capture" onclick="capturePhoto()" style="display:none;">📸 التقاط</button>
+                        <button type="button" id="btnRetake" class="camera-btn btn-retake" onclick="retakePhoto()" style="display:none;">🔄 إعادة</button>
+                        <button type="button" id="btnCancelCamera" class="camera-btn btn-cancel" onclick="closeCamera()" style="display:none;">✕ إلغاء</button>
+                    </div>
+                    <div id="photoStatus" class="photo-status"></div>
+                </div>
+            </div>
+
+            <button type="submit" id="submitBtn" disabled>إرسال</button>
+        </form>
+
+        <div id="statusBox"></div>
+    </div>
+
+    <footer>
+        تم تصميم هذا الرابط من قبل<br>
+        مديرية المعلوماتية والتقانة - شركة مياه طرطوس
+    </footer>
+
+    <script>
+    var SCRIPT_URL = "ضع_رابط_APPS_SCRIPT_هنا_المنتهي_بـ_exec";
+    var QUEUE_KEY = 'olive_offline_queue';
+    var SENT_COUNT_KEY = 'olive_sent_count';
+    var CHUNK_SIZE = 5;
+
+    var gpsLat = null, gpsLng = null, gpsAccuracy = null;
+    var isGpsValid = false;
+    var photoBase64 = null;
+    var isSending = false;
+    var cameraStream = null;
+    var syncRetryTimer = null;
+
+    var pressInput, workerInput, phoneInput, phoneMsg;
+    var gpsDisplay, submitBtn, statusBox, connectionBanner;
+    var sentCountDisplay, pendingCountDisplay;
+    var cameraVideo, photoPreview, cameraPlaceholder;
+    var btnOpenCamera, btnCapture, btnRetake, btnCancelCamera, photoStatus;
+
+    function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+    function getSyriaTimeString() {
+        var now = new Date();
+        var utcMs = now.getTime() + (now.getTimezoneOffset() * 60000);
+        var syria = new Date(utcMs + (3 * 3600000));
+        return syria.getFullYear() + '-' + pad2(syria.getMonth() + 1) + '-' + pad2(syria.getDate()) +
+               ' ' + pad2(syria.getHours()) + ':' + pad2(syria.getMinutes()) + ':' + pad2(syria.getSeconds());
+    }
+    function getDeviceId() {
+        var id = localStorage.getItem('olive_device_id');
+        if (!id) {
+            id = 'DEV-' + Math.random().toString(36).substring(2, 9).toUpperCase();
+            localStorage.setItem('olive_device_id', id);
+        }
+        return id;
+    }
+    function generateUid() {
+        return 'OLV-' + Date.now() + '-' + Math.random().toString(36).substring(2, 10);
+    }
+
+    function updateUI() {
+        try {
+            var pending = getQueue().length;
+            var sent = parseInt(localStorage.getItem(SENT_COUNT_KEY) || "0", 10);
+            if (pendingCountDisplay) pendingCountDisplay.innerText = pending;
+            if (sentCountDisplay) sentCountDisplay.innerText = sent;
+            if (connectionBanner) {
+                if (navigator.onLine) {
+                    connectionBanner.className = "status-banner banner-online";
+                    connectionBanner.innerText = "🟢 متصل (أونلاين)";
+                } else {
+                    connectionBanner.className = "status-banner banner-offline";
+                    connectionBanner.innerText = "🔴 غير متصل (أوفلاين)";
+                }
+            }
+        } catch (e) { console.error('updateUI:', e); }
+    }
+    function incrementSentCount(n) {
+        var current = parseInt(localStorage.getItem(SENT_COUNT_KEY) || "0", 10);
+        current += n;
+        localStorage.setItem(SENT_COUNT_KEY, current.toString());
+        updateUI();
+    }
+
+    function startGpsFetch() {
+        try {
+            gpsDisplay.innerHTML = "⏳ جاري تحديد الموقع...";
+            gpsDisplay.style.color = "#3D5229";
+            isGpsValid = false;
+            checkFormValidity();
+            if (!navigator.geolocation) {
+                gpsDisplay.innerHTML = "❌ المتصفح لا يدعم GPS";
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(
+                function (pos) {
+                    gpsLat = pos.coords.latitude;
+                    gpsLng = pos.coords.longitude;
+                    gpsAccuracy = Math.round(pos.coords.accuracy);
+                    isGpsValid = true;
+                    gpsDisplay.innerHTML = '✅ الموقع: ' + gpsLat.toFixed(5) + ' , ' + gpsLng.toFixed(5) + ' (≈' + gpsAccuracy + 'م)';
+                    gpsDisplay.style.color = "#3D5229";
+                    checkFormValidity();
+                },
+                function (err) {
+                    gpsLat = null; gpsLng = null;
+                    isGpsValid = false;
+                    var reason = "تعذر الحصول على الموقع";
+                    if (err.code === 1) reason = "❌ تم رفض صلاحية الموقع";
+                    else if (err.code === 2) reason = "❌ الموقع غير متاح";
+                    else if (err.code === 3) reason = "❌ انتهت المهلة";
+                    gpsDisplay.innerHTML = reason + '<br><button type="button" class="retry-gps" onclick="startGpsFetch()">🔄 إعادة</button>';
+                    gpsDisplay.style.color = "#b91c1c";
+                    checkFormValidity();
+                },
+                { enableHighAccuracy: true, timeout: 60000, maximumAge: 0 }
+            );
+        } catch (e) { console.error('GPS:', e); }
+    }
+
+    function validatePhoneLive() {
+        var val = phoneInput.value.replace(/\D/g, '').slice(0, 10);
+        phoneInput.value = val;
+        if (val.length === 0) { phoneMsg.textContent = ''; phoneMsg.className = ''; return false; }
+        if (val.length < 10) { phoneMsg.textContent = '⏳ يجب إدخال 10 أرقام (' + val.length + '/10)'; phoneMsg.className = 'error-text'; return false; }
+        if (!val.startsWith('093')) { phoneMsg.textContent = '❌ يجب أن يبدأ الرقم بـ 093'; phoneMsg.className = 'error-text'; return false; }
+        phoneMsg.textContent = '✓ رقم صحيح';
+        phoneMsg.className = 'success-text';
+        return true;
+    }
+
+    function openCamera() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            alert("❌ متصفحك لا يدعم الكاميرا مباشرة.\nاستخدم Chrome أو Safari الحديث.");
+            return;
+        }
+        photoStatus.textContent = "⏳ جاري فتح الكاميرا...";
+        photoStatus.style.color = "#64748b";
+        
+        navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 960 } },
+            audio: false
+        }).then(function(stream) {
+            cameraStream = stream;
+            cameraVideo.srcObject = stream;
+            cameraVideo.style.display = 'block';
+            cameraPlaceholder.style.display = 'none';
+            btnOpenCamera.style.display = 'none';
+            btnCapture.style.display = 'block';
+            btnCancelCamera.style.display = 'block';
+            btnRetake.style.display = 'none';
+            photoPreview.style.display = 'none';
+            photoStatus.textContent = "✅ الكاميرا جاهزة — اضغط 'التقاط'";
+            photoStatus.style.color = "#6B8E23";
+            checkFormValidity();
+        }).catch(function(err) {
+            var msg = "❌ تعذر فتح الكاميرا";
+            if (err.name === 'NotAllowedError') msg = "❌ تم رفض صلاحية الكاميرا";
+            else if (err.name === 'NotFoundError') msg = "❌ لا توجد كاميرا متاحة";
+            else if (err.name === 'NotReadableError') msg = "❌ الكاميرا مستخدمة من تطبيق آخر";
+            photoStatus.textContent = msg;
+            photoStatus.style.color = "#b91c1c";
+        });
+    }
+
+    function capturePhoto() {
+        try {
+            if (!cameraStream || !cameraVideo.videoWidth) {
+                alert("الكاميرا غير جاهزة، انتظر لحظة");
+                return;
+            }
+            var canvas = document.createElement('canvas');
+            var targetWidth = 480;
+            var ratio = cameraVideo.videoHeight / cameraVideo.videoWidth;
+            canvas.width = targetWidth;
+            canvas.height = Math.round(targetWidth * ratio);
+            var ctx = canvas.getContext('2d');
+            ctx.drawImage(cameraVideo, 0, 0, canvas.width, canvas.height);
+            
+            var dataUrl = canvas.toDataURL('image/webp', 0.6);
+            if (dataUrl.indexOf('image/webp') === -1) {
+                dataUrl = canvas.toDataURL('image/jpeg', 0.65);
+            }
+            
+            photoBase64 = dataUrl.split(',')[1];
+            var sizeKB = Math.round(photoBase64.length * 0.75 / 1024);
+            
+            photoPreview.src = dataUrl;
+            photoPreview.style.display = 'block';
+            cameraVideo.style.display = 'none';
+            btnCapture.style.display = 'none';
+            btnCancelCamera.style.display = 'none';
+            btnRetake.style.display = 'block';
+            photoStatus.textContent = "✅ تم التقاط الصورة (~" + sizeKB + " KB)";
+            photoStatus.style.color = "#6B8E23";
+            closeCameraStream();
+            checkFormValidity();
+        } catch (e) {
+            photoStatus.textContent = "❌ خطأ في الالتقاط";
+            photoStatus.style.color = "#b91c1c";
+        }
+    }
+
+    function retakePhoto() {
+        photoBase64 = null;
+        photoPreview.style.display = 'none';
+        photoPreview.src = '';
+        photoStatus.textContent = '';
+        btnRetake.style.display = 'none';
+        btnOpenCamera.style.display = 'block';
+        cameraPlaceholder.style.display = 'block';
+        checkFormValidity();
+    }
+
+    function closeCamera() {
+        closeCameraStream();
+        cameraVideo.style.display = 'none';
+        cameraPlaceholder.style.display = 'block';
+        btnOpenCamera.style.display = 'block';
+        btnCapture.style.display = 'none';
+        btnCancelCamera.style.display = 'none';
+        photoStatus.textContent = '';
+        checkFormValidity();
+    }
+
+    function closeCameraStream() {
+        if (cameraStream) {
+            try { cameraStream.getTracks().forEach(function(t) { t.stop(); }); } catch (e) {}
+            cameraStream = null;
+        }
+    }
+
+    function checkFormValidity() {
+        try {
+            var pressOK = pressInput && pressInput.value.trim().length >= 2;
+            var workerOK = workerInput && workerInput.value.trim().length >= 3;
+            var phoneOK = phoneInput && /^093\d{7}$/.test(phoneInput.value);
+            var photoOK = photoBase64 !== null;
+            
+            if (pressOK && workerOK && phoneOK && isGpsValid && photoOK && !isSending) {
+                submitBtn.disabled = false;
+            } else {
+                submitBtn.disabled = true;
+            }
+        } catch (e) { console.error('checkFormValidity:', e); }
+    }
+
+    function showStatus(msg, type) {
+        statusBox.textContent = msg;
+        statusBox.className = 'status-' + type;
+        statusBox.style.display = 'block';
+    }
+    function hideStatus(delay) {
+        setTimeout(function () { statusBox.style.display = 'none'; }, delay || 5000);
+    }
+
+    function getQueue() {
+        try { return JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]'); }
+        catch (e) { return []; }
+    }
+    function saveToQueue(payload) {
+        var q = getQueue();
+        q.push(payload);
+        try { localStorage.setItem(QUEUE_KEY, JSON.stringify(q)); }
+        catch (e) { showStatus("⚠️ الذاكرة ممتلئة — قم بالمزامنة أولاً", "error"); }
+        updateUI();
+    }
+
+    function sendSingle(payload) {
+        return new Promise(function (resolve) {
+            try {
+                fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify(payload)
+                }).then(function () {
+                    setTimeout(function () { resolve('success'); }, 1500);
+                }).catch(function () { resolve('offline'); });
+            } catch (e) { resolve('offline'); }
+        });
+    }
+
+    function handleSubmit(e) {
+        e.preventDefault();
+        if (isSending) return;
+        if (!photoBase64) { alert("⚠️ الرجاء التقاط صورة أولاً"); return; }
+        
+        isSending = true;
+        submitBtn.disabled = true;
+        submitBtn.textContent = "⏳ جاري الإرسال...";
+        statusBox.style.display = 'none';
+        
+        var origin = navigator.onLine ? "متصل" : "غير متصل";
+        
+        var payload = {
+            _uid: generateUid(),
+            pressName: pressInput.value.trim(),
+            workerName: workerInput.value.trim(),
+            phone: phoneInput.value,
+            latitude: gpsLat,
+            longitude: gpsLng,
+            accuracy: gpsAccuracy,
+            photoBase64: photoBase64,
+            deviceTimestamp: getSyriaTimeString(),
+            deviceId: getDeviceId(),
+            origin: origin
+        };
+        
+        var afterResult = function (result) {
+            if (result === 'success') {
+                incrementSentCount(1);
+                showStatus("✅ تم تسجيل الحضور بنجاح", "success");
+                hideStatus(5000);
+            } else {
+                if (origin === "متصل") payload.origin = "غير متصل (فشل الاتصال)";
+                else payload.origin = "غير متصل";
+                saveToQueue(payload);
+                showStatus("⚠️ تعذر إرسال البصمة — تم حفظها وسيتم إرسالها عند توفر الإنترنت", "warning");
+                hideStatus(6000);
+                if (navigator.onLine) processQueue();
+            }
+            
+            pressInput.value = '';
+            workerInput.value = '';
+            phoneInput.value = '';
+            phoneMsg.textContent = '';
+            phoneMsg.className = '';
+            retakePhoto();
+            isSending = false;
+            submitBtn.textContent = "إرسال";
+            checkFormValidity();
+            updateUI();
+            setTimeout(startGpsFetch, 800);
+        };
+        
+        if (navigator.onLine) {
+            sendSingle(payload).then(afterResult);
+        } else {
+            afterResult('offline');
+        }
+    }
+
+    function processQueue() {
+        if (!navigator.onLine) return Promise.resolve(false);
+        if (processQueue._running) return Promise.resolve(false);
+        processQueue._running = true;
+        
+        var totalSent = 0;
+        
+        function processNext() {
+            var q = getQueue();
+            if (q.length === 0) {
+                processQueue._running = false;
+                updateUI();
+                if (totalSent > 0) {
+                    showStatus("✅ تم إرسال " + totalSent + " بصمة معلقة", "success");
+                    hideStatus(6000);
+                }
+                return Promise.resolve(true);
+            }
+            var chunk = q.slice(0, CHUNK_SIZE);
+            return new Promise(function (resolve) {
+                try {
+                    fetch(SCRIPT_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        body: JSON.stringify(chunk)
+                    }).then(function () {
+                        setTimeout(function () {
+                            var q2 = getQueue();
+                            q2.splice(0, chunk.length);
+                            localStorage.setItem(QUEUE_KEY, JSON.stringify(q2));
+                            incrementSentCount(chunk.length);
+                            totalSent += chunk.length;
+                            resolve(true);
+                        }, 2000);
+                    }).catch(function () { resolve(false); });
+                } catch (e) { resolve(false); }
+            }).then(function (ok) {
+                if (!ok) {
+                    processQueue._running = false;
+                    updateUI();
+                    return false;
+                }
+                return new Promise(function (r) { setTimeout(r, 1000); }).then(processNext);
+            });
+        }
+        return processNext();
+    }
+
+    function init() {
+        try {
+            pressInput = document.getElementById('pressName');
+            workerInput = document.getElementById('workerName');
+            phoneInput = document.getElementById('phone');
+            phoneMsg = document.getElementById('phoneMsg');
+            gpsDisplay = document.getElementById('gpsDisplay');
+            submitBtn = document.getElementById('submitBtn');
+            statusBox = document.getElementById('statusBox');
+            connectionBanner = document.getElementById('connectionBanner');
+            sentCountDisplay = document.getElementById('sentCount');
+            pendingCountDisplay = document.getElementById('pendingCount');
+            cameraVideo = document.getElementById('cameraVideo');
+            photoPreview = document.getElementById('photoPreview');
+            cameraPlaceholder = document.getElementById('cameraPlaceholder');
+            btnOpenCamera = document.getElementById('btnOpenCamera');
+            btnCapture = document.getElementById('btnCapture');
+            btnRetake = document.getElementById('btnRetake');
+            btnCancelCamera = document.getElementById('btnCancelCamera');
+            photoStatus = document.getElementById('photoStatus');
+            
+            pressInput.addEventListener('input', checkFormValidity);
+            workerInput.addEventListener('input', checkFormValidity);
+            phoneInput.addEventListener('input', function () {
+                validatePhoneLive();
+                checkFormValidity();
+            });
+            
+            document.getElementById('attendanceForm').addEventListener('submit', handleSubmit);
+            
+            window.addEventListener('online', function () { updateUI(); processQueue(); });
+            window.addEventListener('offline', updateUI);
+            
+            var pendingOnLoad = getQueue().length;
+            if (pendingOnLoad > 0) {
+                if (navigator.onLine) {
+                    showStatus("⏳ لديك " + pendingOnLoad + " بصمة معلقة، جاري محاولة الإرسال...", "warning");
+                } else {
+                    showStatus("📴 لديك " + pendingOnLoad + " بصمة معلقة — سيتم إرسالها عند توفر الإنترنت", "warning");
+                }
+            }
+            
+            startGpsFetch();
+            updateUI();
+            
+            if (navigator.onLine) processQueue();
+            
+            if (!syncRetryTimer) {
+                syncRetryTimer = setInterval(function () {
+                    if (getQueue().length > 0 && navigator.onLine) processQueue();
+                }, 30000);
+            }
+        } catch (e) { console.error('Init error:', e); }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+    </script>
+</body>
+</html>
