@@ -1,4 +1,4 @@
-var CACHE_NAME = 'olive-pwa-v3';
+var CACHE_NAME = 'olive-pwa-v4';
 var CORE_ASSETS = ['./', './index.html'];
 var OPTIONAL_ASSETS = ['./manifest.json', './icon.svg', './icon-192.png', './icon-512.png'];
 
