@@ -37,8 +37,7 @@
             box-shadow: 0 4px 15px rgba(85,107,47,0.15);
             width: 100%; flex: 1;
         }
-        .title { text-align: center; color: var(--primary); font-size: 1.15rem; font-weight: 700; margin: 0 0 2px 0; line-height: 1.4; }
-        .subtitle { text-align: center; color: #64748b; font-size: 0.88rem; font-weight: 600; margin: 0 0 12px 0; }
+        .title { text-align: center; color: var(--primary); font-size: 1.15rem; font-weight: 700; margin: 0 0 14px 0; line-height: 1.4; }
 
         .status-banner { width: 100%; padding: 8px 10px; border-radius: 8px; font-size: 13px; font-weight: bold; text-align: center; margin-bottom: 10px; }
         .banner-online { background: #e6f0d3; color: #3D5229; border: 1px solid var(--primary); }
@@ -122,7 +121,6 @@
 <body>
     <div class="container">
         <h1 class="title">🫒 رابط مشرفي معاصر الزيتون في طرطوس</h1>
-        <p class="subtitle">تسجيل حضور العاملين</p>
 
         <div id="connectionBanner" class="status-banner banner-online">🟢 متصل (أونلاين)</div>
 
@@ -144,7 +142,7 @@
             </div>
 
             <div class="form-group">
-                <label for="workerName">اسم العامل:</label>
+                <label for="workerName">اسم الموظف:</label>
                 <input type="text" id="workerName" placeholder="الاسم الكامل" autocomplete="off">
             </div>
 
@@ -160,7 +158,7 @@
             </div>
 
             <div class="form-group">
-                <label>صورة العامل (من الكاميرا فقط):</label>
+                <label>إرفاق صورة (من الكاميرا فقط):</label>
                 <div class="camera-box">
                     <video id="cameraVideo" autoplay playsinline muted></video>
                     <img id="photoPreview" alt="معاينة">
@@ -288,13 +286,37 @@
         } catch (e) { console.error('GPS:', e); }
     }
 
-    // ✅ التحقق: يبدأ بـ 09 فقط + 10 أرقام
+    // ✅ التحقق الفوري: يبدأ بـ 09 + 10 أرقام
     function validatePhoneLive() {
         var val = phoneInput.value.replace(/\D/g, '').slice(0, 10);
         phoneInput.value = val;
-        if (val.length === 0) { phoneMsg.textContent = ''; phoneMsg.className = ''; return false; }
-        if (val.length < 10) { phoneMsg.textContent = '⏳ يجب إدخال 10 أرقام (' + val.length + '/10)'; phoneMsg.className = 'error-text'; return false; }
-        if (!val.startsWith('09')) { phoneMsg.textContent = '❌ يجب أن يبدأ الرقم بـ 09'; phoneMsg.className = 'error-text'; return false; }
+        
+        if (val.length === 0) {
+            phoneMsg.textContent = '';
+            phoneMsg.className = '';
+            return false;
+        }
+        
+        // ✅ خطأ فوري إذا الحرف الأول ليس 0
+        if (val.charAt(0) !== '0') {
+            phoneMsg.textContent = '❌ يجب أن يبدأ رقم الهاتف بـ 09';
+            phoneMsg.className = 'error-text';
+            return false;
+        }
+        
+        // ✅ خطأ فوري إذا الحرف الثاني ليس 9
+        if (val.length >= 2 && val.charAt(1) !== '9') {
+            phoneMsg.textContent = '❌ يجب أن يبدأ رقم الهاتف بـ 09';
+            phoneMsg.className = 'error-text';
+            return false;
+        }
+        
+        if (val.length < 10) {
+            phoneMsg.textContent = '⏳ يجب إدخال 10 أرقام (' + val.length + '/10)';
+            phoneMsg.className = 'error-text';
+            return false;
+        }
+        
         phoneMsg.textContent = '✓ رقم صحيح';
         phoneMsg.className = 'success-text';
         return true;
