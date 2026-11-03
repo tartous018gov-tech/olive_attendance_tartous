@@ -190,40 +190,6 @@
     </footer>
 
     <script>
-    // ============================================================
-    // 0) إلغاء كل SW قديم + مسح كل الكاشات + تسجيل SW جديد
-    // ============================================================
-    if ('serviceWorker' in navigator) {
-        // ✅ إلغاء تسجيل كل SW قديم
-        navigator.serviceWorker.getRegistrations().then(function (regs) {
-            regs.forEach(function (reg) {
-                reg.unregister();
-            });
-        });
-        
-        // ✅ مسح كل الكاشات القديمة
-        if (window.caches) {
-            caches.keys().then(function (keys) {
-                keys.forEach(function (key) {
-                    caches.delete(key);
-                });
-            });
-        }
-
-        // ✅ تسجيل SW جديد
-        window.addEventListener('load', function () {
-            navigator.serviceWorker.register('./service-worker.js', { scope: './' })
-                .then(function (reg) {
-                    console.log('SW registered:', reg.scope);
-                    reg.update();
-                })
-                .catch(function (err) { console.log('SW failed:', err); });
-        });
-    }
-
-    // ============================================================
-    // 1) الإعدادات
-    // ============================================================
     var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxo2wcCYEuuS_CAdNdL3spJXY2g5xEbLQEUQNOVBl-gjS6lQMz1GfAO3OYIjBtor8ZT/exec";
     var QUEUE_KEY = 'olive_offline_queue';
     var SENT_COUNT_KEY = 'olive_sent_count';
@@ -242,6 +208,15 @@
     var sentCountDisplay, pendingCountDisplay;
     var cameraVideo, photoPreview, cameraPlaceholder;
     var btnOpenCamera, btnSwitchCamera, btnCapture, btnRetake, btnCancelCamera, photoStatus;
+
+    // ==================== تسجيل Service Worker (للعمل أوفلاين) ====================
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+            navigator.serviceWorker.register('./service-worker.js')
+                .then(function (reg) { console.log('SW ok', reg.scope); })
+                .catch(function (err) { console.error('SW failed', err); });
+        });
+    }
 
     function pad2(n) { return n < 10 ? '0' + n : '' + n; }
     function getSyriaTimeString() {
@@ -323,6 +298,7 @@
         } catch (e) { console.error('GPS:', e); }
     }
 
+    // ✅ التحقق الفوري: يبدأ بـ 09 + 10 أرقام
     function validatePhoneLive() {
         var val = phoneInput.value.replace(/\D/g, '').slice(0, 10);
         phoneInput.value = val;
