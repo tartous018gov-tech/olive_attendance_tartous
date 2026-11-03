@@ -92,6 +92,7 @@
             flex: 1; min-width: 130px;
         }
         .btn-open-camera { background: var(--primary); color: white; }
+        .btn-switch { background: #17a2b8; color: white; }
         .btn-capture { background: var(--success); color: white; }
         .btn-retake { background: var(--warning); color: white; }
         .btn-cancel { background: #6c757d; color: white; }
@@ -168,6 +169,7 @@
                     </div>
                     <div class="camera-actions">
                         <button type="button" id="btnOpenCamera" class="camera-btn btn-open-camera" onclick="openCamera()">📷 فتح الكاميرا</button>
+                        <button type="button" id="btnSwitchCamera" class="camera-btn btn-switch" onclick="switchCamera()" style="display:none;">🔄 تبديل</button>
                         <button type="button" id="btnCapture" class="camera-btn btn-capture" onclick="capturePhoto()" style="display:none;">📸 التقاط</button>
                         <button type="button" id="btnRetake" class="camera-btn btn-retake" onclick="retakePhoto()" style="display:none;">🔄 إعادة</button>
                         <button type="button" id="btnCancelCamera" class="camera-btn btn-cancel" onclick="closeCamera()" style="display:none;">✕ إلغاء</button>
@@ -188,7 +190,41 @@
     </footer>
 
     <script>
-    var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxo2wcCYEuuS_CAdNdL3spJXY2g5xEbLQEUQNOVBl-gjS6lQMz1GfAO3OYIjBtor8ZT/exec";
+    // ============================================================
+    // 0) إلغاء كل SW قديم + مسح كل الكاشات + تسجيل SW جديد
+    // ============================================================
+    if ('serviceWorker' in navigator) {
+        // ✅ إلغاء تسجيل كل SW قديم
+        navigator.serviceWorker.getRegistrations().then(function (regs) {
+            regs.forEach(function (reg) {
+                reg.unregister();
+            });
+        });
+        
+        // ✅ مسح كل الكاشات القديمة
+        if (window.caches) {
+            caches.keys().then(function (keys) {
+                keys.forEach(function (key) {
+                    caches.delete(key);
+                });
+            });
+        }
+
+        // ✅ تسجيل SW جديد
+        window.addEventListener('load', function () {
+            navigator.serviceWorker.register('./service-worker.js', { scope: './' })
+                .then(function (reg) {
+                    console.log('SW registered:', reg.scope);
+                    reg.update();
+                })
+                .catch(function (err) { console.log('SW failed:', err); });
+        });
+    }
+
+    // ============================================================
+    // 1) الإعدادات
+    // ============================================================
+    var SCRIPT_URL = "ضع_رابط_APPS_SCRIPT_هنا_المنتهي_بـ_exec";
     var QUEUE_KEY = 'olive_offline_queue';
     var SENT_COUNT_KEY = 'olive_sent_count';
     var CHUNK_SIZE = 5;
@@ -198,13 +234,14 @@
     var photoBase64 = null;
     var isSending = false;
     var cameraStream = null;
+    var currentFacingMode = 'environment';
     var syncRetryTimer = null;
 
     var pressInput, workerInput, phoneInput, phoneMsg;
     var gpsDisplay, submitBtn, statusBox, connectionBanner;
     var sentCountDisplay, pendingCountDisplay;
     var cameraVideo, photoPreview, cameraPlaceholder;
-    var btnOpenCamera, btnCapture, btnRetake, btnCancelCamera, photoStatus;
+    var btnOpenCamera, btnSwitchCamera, btnCapture, btnRetake, btnCancelCamera, photoStatus;
 
     function pad2(n) { return n < 10 ? '0' + n : '' + n; }
     function getSyriaTimeString() {
@@ -286,7 +323,6 @@
         } catch (e) { console.error('GPS:', e); }
     }
 
-    // ✅ التحقق الفوري: يبدأ بـ 09 + 10 أرقام
     function validatePhoneLive() {
         var val = phoneInput.value.replace(/\D/g, '').slice(0, 10);
         phoneInput.value = val;
@@ -297,14 +333,12 @@
             return false;
         }
         
-        // ✅ خطأ فوري إذا الحرف الأول ليس 0
         if (val.charAt(0) !== '0') {
             phoneMsg.textContent = '❌ يجب أن يبدأ رقم الهاتف بـ 09';
             phoneMsg.className = 'error-text';
             return false;
         }
         
-        // ✅ خطأ فوري إذا الحرف الثاني ليس 9
         if (val.length >= 2 && val.charAt(1) !== '9') {
             phoneMsg.textContent = '❌ يجب أن يبدأ رقم الهاتف بـ 09';
             phoneMsg.className = 'error-text';
@@ -330,20 +364,43 @@
         photoStatus.textContent = "⏳ جاري فتح الكاميرا...";
         photoStatus.style.color = "#64748b";
         
-        navigator.mediaDevices.getUserMedia({
-            video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 960 } },
-            audio: false
+        if (cameraStream) {
+            try { cameraStream.getTracks().forEach(function(t) { t.stop(); }); } catch (e) {}
+            cameraStream = null;
+        }
+        
+        var tryExact = function() {
+            return navigator.mediaDevices.getUserMedia({
+                video: { facingMode: { exact: currentFacingMode }, width: { ideal: 1280 }, height: { ideal: 960 } },
+                audio: false
+            });
+        };
+        
+        var tryIdeal = function() {
+            return navigator.mediaDevices.getUserMedia({
+                video: { facingMode: { ideal: currentFacingMode }, width: { ideal: 1280 }, height: { ideal: 960 } },
+                audio: false
+            });
+        };
+        
+        tryExact().catch(function(err) {
+            if (err.name === 'NotAllowedError') throw err;
+            console.log('Exact failed, trying ideal...');
+            return tryIdeal();
         }).then(function(stream) {
             cameraStream = stream;
             cameraVideo.srcObject = stream;
             cameraVideo.style.display = 'block';
             cameraPlaceholder.style.display = 'none';
             btnOpenCamera.style.display = 'none';
+            btnSwitchCamera.style.display = 'block';
             btnCapture.style.display = 'block';
             btnCancelCamera.style.display = 'block';
             btnRetake.style.display = 'none';
             photoPreview.style.display = 'none';
-            photoStatus.textContent = "✅ الكاميرا جاهزة — اضغط 'التقاط'";
+            
+            var camName = currentFacingMode === 'environment' ? 'الخلفية' : 'الأمامية';
+            photoStatus.textContent = "✅ الكاميرا " + camName + " جاهزة — اضغط 'التقاط'";
             photoStatus.style.color = "#6B8E23";
             checkFormValidity();
         }).catch(function(err) {
@@ -351,9 +408,15 @@
             if (err.name === 'NotAllowedError') msg = "❌ تم رفض صلاحية الكاميرا";
             else if (err.name === 'NotFoundError') msg = "❌ لا توجد كاميرا متاحة";
             else if (err.name === 'NotReadableError') msg = "❌ الكاميرا مستخدمة من تطبيق آخر";
+            else if (err.name === 'OverconstrainedError') msg = "⚠️ الكاميرا المطلوبة غير متاحة";
             photoStatus.textContent = msg;
             photoStatus.style.color = "#b91c1c";
         });
+    }
+
+    function switchCamera() {
+        currentFacingMode = (currentFacingMode === 'environment') ? 'user' : 'environment';
+        openCamera();
     }
 
     function capturePhoto() {
@@ -382,6 +445,7 @@
             photoPreview.style.display = 'block';
             cameraVideo.style.display = 'none';
             btnCapture.style.display = 'none';
+            btnSwitchCamera.style.display = 'none';
             btnCancelCamera.style.display = 'none';
             btnRetake.style.display = 'block';
             photoStatus.textContent = "✅ تم التقاط الصورة (~" + sizeKB + " KB)";
@@ -401,7 +465,9 @@
         photoStatus.textContent = '';
         btnRetake.style.display = 'none';
         btnOpenCamera.style.display = 'block';
+        btnSwitchCamera.style.display = 'none';
         cameraPlaceholder.style.display = 'block';
+        currentFacingMode = 'environment';
         checkFormValidity();
     }
 
@@ -410,6 +476,7 @@
         cameraVideo.style.display = 'none';
         cameraPlaceholder.style.display = 'block';
         btnOpenCamera.style.display = 'block';
+        btnSwitchCamera.style.display = 'none';
         btnCapture.style.display = 'none';
         btnCancelCamera.style.display = 'none';
         photoStatus.textContent = '';
@@ -597,6 +664,7 @@
             photoPreview = document.getElementById('photoPreview');
             cameraPlaceholder = document.getElementById('cameraPlaceholder');
             btnOpenCamera = document.getElementById('btnOpenCamera');
+            btnSwitchCamera = document.getElementById('btnSwitchCamera');
             btnCapture = document.getElementById('btnCapture');
             btnRetake = document.getElementById('btnRetake');
             btnCancelCamera = document.getElementById('btnCancelCamera');
